@@ -55,4 +55,11 @@ export const apiService = {
   // Match
   generateMatch: (userId: number, jobDescription: string) =>
     api.post<MatchResponse>('/match/', { user_id: userId, job_description: jobDescription } as MatchRequest),
+
+  // Import
+  uploadCV: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post<{ message: string, experiences_added: number, skills_matched: number }>('/import/cv', formData);
+  },
 };
