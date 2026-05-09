@@ -1,0 +1,1 @@
+SYNONYMS = {"react.js": "react", "reactjs": "react", "node.js": "nodejs", "vue.js": "vue", "ts": "typescript", "c++": "cpp", "aws": "amazon web services", "js": "javascript", "golang": "go", "py": "python"}
