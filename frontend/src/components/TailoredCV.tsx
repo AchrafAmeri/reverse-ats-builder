@@ -1,3 +1,4 @@
+import { usePDF } from 'react-to-pdf';
 import type { MatchResponse, User } from '../types';
 
 interface TailoredCVProps {
@@ -7,6 +8,7 @@ interface TailoredCVProps {
 
 export function TailoredCV({ user, matchResult }: TailoredCVProps) {
   const { top_experiences, top_projects, matched_skills } = matchResult;
+  const { toPDF, targetRef } = usePDF({ filename: 'tailored-cv.pdf' });
 
   // Helper to highlight matched skills in text
   const highlightSkills = (text: string | undefined, skillsToHighlight: string[]) => {
@@ -45,9 +47,15 @@ export function TailoredCV({ user, matchResult }: TailoredCVProps) {
   const relevantProjects = top_projects.filter(proj => proj.score > 0);
 
   return (
-    <div className="bg-white text-gray-900 shadow-lg rounded-lg p-8 md:p-12 border border-gray-200 mx-auto" style={{ maxWidth: '210mm', minHeight: '297mm' }}>
+    <div ref={targetRef} className="bg-white text-gray-900 shadow-lg rounded-lg p-8 md:p-12 border border-gray-200 mx-auto" style={{ maxWidth: '210mm', minHeight: '297mm' }}>
       {/* Print Button (hidden in print view) */}
-      <div className="flex justify-end mb-4 print:hidden">
+      <div data-html2canvas-ignore="true" className="flex justify-end gap-2 mb-4 print:hidden">
+         <button
+           onClick={() => toPDF()}
+           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+         >
+           Download as PDF
+         </button>
          <button
            onClick={() => window.print()}
            className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors"
