@@ -10,6 +10,7 @@ import { ProjectList } from './components/ProjectList';
 import { JobMatcher } from './components/JobMatcher';
 import { SkillSuggestions } from './components/SkillSuggestions';
 import { TailoredCV } from './components/TailoredCV';
+import { CVImporter } from './components/CVImporter';
 import type { MatchResponse } from './types';
 
 function Dashboard() {
@@ -141,29 +142,32 @@ function Dashboard() {
 
       <main className="w-full max-w-full px-8">
         {activeTab === 'profile' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column: Profile & Skills */}
+          <div className="flex flex-col">
+            <CVImporter onImportSuccess={refreshUserOnly} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left Column: Profile & Skills */}
             <div className="lg:col-span-1 space-y-8">
               <UserProfileForm user={localUser} onUpdate={setLocalUser} />
               <SkillManager skills={skills} onSkillsChanged={fetchSkillsOnly} />
             </div>
 
-            {/* Right Column: Experiences & Projects */}
-            <div className="lg:col-span-2 space-y-8">
-              <ExperienceList
-                userId={localUser.id}
-                experiences={localUser.experiences || []}
-                allSkills={skills}
-                onExperienceAdded={refreshUserOnly}
-                onExperienceDeleted={refreshUserOnly}
-              />
-              <ProjectList
-                userId={localUser.id}
-                projects={localUser.projects || []}
-                allSkills={skills}
-                onProjectAdded={refreshUserOnly}
-                onProjectDeleted={refreshUserOnly}
-              />
+              {/* Right Column: Experiences & Projects */}
+              <div className="lg:col-span-2 space-y-8">
+                <ExperienceList
+                  userId={localUser.id}
+                  experiences={localUser.experiences || []}
+                  allSkills={skills}
+                  onExperienceAdded={refreshUserOnly}
+                  onExperienceDeleted={refreshUserOnly}
+                />
+                <ProjectList
+                  userId={localUser.id}
+                  projects={localUser.projects || []}
+                  allSkills={skills}
+                  onProjectAdded={refreshUserOnly}
+                  onProjectDeleted={refreshUserOnly}
+                />
+              </div>
             </div>
           </div>
         ) : (
