@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { User, UserCreate, UserUpdate, Skill, SkillCreate, SkillUpdate, Experience, ExperienceCreate, ExperienceUpdate, Project, ProjectCreate, ProjectUpdate } from '../types';
+import type { User, UserCreate, UserUpdate, Skill, SkillCreate, SkillUpdate, Experience, ExperienceCreate, ExperienceUpdate, Project, ProjectCreate, ProjectUpdate, MatchResponse, MatchRequest } from '../types';
 
 const API_BASE_URL = 'http://localhost:8000/api/v1';
 
@@ -37,4 +37,8 @@ export const apiService = {
   createProject: (data: ProjectCreate) => api.post<Project>('/projects', data),
   updateProject: (id: number, data: ProjectUpdate) => api.put<Project>(`/projects/${id}`, data),
   deleteProject: (id: number) => api.delete(`/projects/${id}`),
+
+  // Match
+  generateMatch: (userId: number, jobDescription: string) =>
+    api.post<MatchResponse>('/match/', { user_id: userId, job_description: jobDescription } as MatchRequest),
 };
