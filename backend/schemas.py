@@ -84,3 +84,22 @@ class UserResponse(UserBase):
     experiences: List[ExperienceResponse] = []
     projects: List[ProjectResponse] = []
     model_config = ConfigDict(from_attributes=True)
+
+
+# Match Schemas
+class MatchRequest(BaseModel):
+    user_id: int
+    job_description: str
+
+class ScoredExperience(ExperienceResponse):
+    score: int
+    model_config = ConfigDict(from_attributes=True)
+
+class ScoredProject(ProjectResponse):
+    score: int
+    model_config = ConfigDict(from_attributes=True)
+
+class MatchResponse(BaseModel):
+    matched_skills: List[str]
+    top_experiences: List[ScoredExperience]
+    top_projects: List[ScoredProject]
