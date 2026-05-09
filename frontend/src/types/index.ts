@@ -95,3 +95,23 @@ export interface UserUpdate {
   phone?: string;
   linkedin_url?: string;
 }
+
+// Match Types
+export interface MatchRequest {
+  user_id: number;
+  job_description: string;
+}
+
+export interface ScoredExperience extends Experience {
+  score: number;
+}
+
+export interface ScoredProject extends Project {
+  score: number;
+}
+
+export interface MatchResponse {
+  matched_skills: string[];
+  top_experiences: ScoredExperience[];
+  top_projects: ScoredProject[];
+}

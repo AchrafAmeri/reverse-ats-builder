@@ -1,5 +1,5 @@
 from typing import Dict, Any, List
-from ..models import User
+from models import User
 
 def calculate_match(user: User, job_description: str) -> Dict[str, Any]:
     jd_lower = job_description.lower()

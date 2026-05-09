@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Date, Text, ForeignKey, Table
 from sqlalchemy.orm import relationship
-from .database import Base
+from database import Base
 
 experience_skills = Table(
     "experience_skills",
