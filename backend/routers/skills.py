@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import models, schemas
 import database
 from database import get_db
+from routers.auth import get_current_user
 
 router = APIRouter(
     prefix="/skills",
@@ -11,7 +12,7 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=schemas.SkillResponse)
-def create_skill(skill: schemas.SkillCreate, db: Session = Depends(get_db)):
+def create_skill(skill: schemas.SkillCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     db_skill = db.query(models.Skill).filter(models.Skill.name == skill.name).first()
     if db_skill:
         raise HTTPException(status_code=400, detail="Skill already exists")
@@ -23,19 +24,19 @@ def create_skill(skill: schemas.SkillCreate, db: Session = Depends(get_db)):
     return new_skill
 
 @router.get("/", response_model=List[schemas.SkillResponse])
-def read_skills(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def read_skills(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     skills = db.query(models.Skill).offset(skip).limit(limit).all()
     return skills
 
 @router.get("/{skill_id}", response_model=schemas.SkillResponse)
-def read_skill(skill_id: int, db: Session = Depends(get_db)):
+def read_skill(skill_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
     if skill is None:
         raise HTTPException(status_code=404, detail="Skill not found")
     return skill
 
 @router.put("/{skill_id}", response_model=schemas.SkillResponse)
-def update_skill(skill_id: int, skill: schemas.SkillUpdate, db: Session = Depends(get_db)):
+def update_skill(skill_id: int, skill: schemas.SkillUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     db_skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
     if db_skill is None:
         raise HTTPException(status_code=404, detail="Skill not found")
@@ -49,7 +50,7 @@ def update_skill(skill_id: int, skill: schemas.SkillUpdate, db: Session = Depend
     return db_skill
 
 @router.delete("/{skill_id}")
-def delete_skill(skill_id: int, db: Session = Depends(get_db)):
+def delete_skill(skill_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     db_skill = db.query(models.Skill).filter(models.Skill.id == skill_id).first()
     if db_skill is None:
         raise HTTPException(status_code=404, detail="Skill not found")

@@ -64,13 +64,13 @@ export const SkillManager: React.FC<SkillManagerProps> = ({ skills, onSkillsChan
         </div>
       )}
 
-      <form onSubmit={handleAddSkill} className="flex gap-2 mb-6">
+      <form onSubmit={handleAddSkill} className="flex flex-col sm:flex-row flex-wrap gap-2 mb-6">
         <input
           type="text"
           placeholder="Skill Name (e.g., React)"
           value={newSkillName}
           onChange={(e) => setNewSkillName(e.target.value)}
-          className="flex-1 px-4 py-2 border rounded-md focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className="flex-1 min-w-0 px-4 py-2 border rounded-md focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           required
         />
         <input
@@ -78,12 +78,12 @@ export const SkillManager: React.FC<SkillManagerProps> = ({ skills, onSkillsChan
           placeholder="Category (optional)"
           value={newSkillCategory}
           onChange={(e) => setNewSkillCategory(e.target.value)}
-          className="flex-1 px-4 py-2 border rounded-md focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className="flex-1 min-w-0 px-4 py-2 border rounded-md focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
         />
         <button
           type="submit"
           disabled={isLoading || !newSkillName.trim()}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50"
+          className="flex justify-center items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 sm:w-auto w-full"
         >
           <Plus size={18} />
           Add
