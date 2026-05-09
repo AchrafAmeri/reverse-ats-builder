@@ -11,6 +11,20 @@ const api = axios.create({
 });
 
 export const apiService = {
+  setToken: (token: string | null) => {
+    if (token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete api.defaults.headers.common['Authorization'];
+    }
+  },
+
+  // Auth
+  login: (data: FormData) => api.post<{ access_token: string, token_type: string }>('/auth/login', data, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+  }),
+  register: (data: UserCreate) => api.post<User>('/auth/register', data),
+
   // Users
   getUsers: () => api.get<User[]>('/users'),
   getUser: (id: number) => api.get<User>(`/users/${id}`),

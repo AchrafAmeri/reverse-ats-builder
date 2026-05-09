@@ -65,6 +65,14 @@ class ProjectResponse(ProjectBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+# Auth Schemas
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    user_id: Optional[int] = None
+
 # User Schemas
 class UserBase(BaseModel):
     name: str
@@ -73,7 +81,7 @@ class UserBase(BaseModel):
     linkedin_url: Optional[str] = None
 
 class UserCreate(UserBase):
-    pass
+    password: str
 
 class UserUpdate(UserBase):
     name: Optional[str] = None
