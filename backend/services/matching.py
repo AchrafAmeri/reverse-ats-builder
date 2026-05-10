@@ -127,9 +127,18 @@ def calculate_match(user: User, job_description: str) -> Dict[str, Any]:
     counter = Counter(final_extracted)
     missing_skills = [word for word, count in counter.most_common(10)]
 
+    educations = []
+    for edu in user.educations:
+        edu_dict = {c.name: getattr(edu, c.name) for c in edu.__table__.columns}
+        educations.append(edu_dict)
+
+    # Sort educations by date descending (using string comparison for start_date which is a String)
+    educations.sort(key=lambda x: x.get("start_date") or "", reverse=True)
+
     return {
         "matched_skills": matched_skills,
         "top_experiences": scored_experiences,
         "top_projects": scored_projects,
+        "educations": educations,
         "missing_skills": missing_skills
     }

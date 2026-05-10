@@ -44,6 +44,30 @@ class ExperienceResponse(ExperienceBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+# Education Schemas
+class EducationBase(BaseModel):
+    degree: str
+    institution: str
+    start_date: str
+    end_date: Optional[str] = None
+    description: Optional[str] = None
+
+class EducationCreate(EducationBase):
+    user_id: int
+
+class EducationUpdate(BaseModel):
+    degree: Optional[str] = None
+    institution: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    description: Optional[str] = None
+
+class EducationResponse(EducationBase):
+    id: int
+    user_id: int
+    model_config = ConfigDict(from_attributes=True)
+
+
 # Project Schemas
 class ProjectBase(BaseModel):
     name: str
@@ -91,6 +115,7 @@ class UserResponse(UserBase):
     id: int
     experiences: List[ExperienceResponse] = []
     projects: List[ProjectResponse] = []
+    educations: List[EducationResponse] = []
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -111,4 +136,5 @@ class MatchResponse(BaseModel):
     matched_skills: List[str]
     top_experiences: List[ScoredExperience]
     top_projects: List[ScoredProject]
+    educations: List[EducationResponse] = []
     missing_skills: List[str]

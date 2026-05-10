@@ -12,7 +12,7 @@ interface CVBuilderProps {
   onSkillsChanged: () => void;
 }
 
-export type ActiveCategory = 'experiences' | 'projects' | 'skills' | null;
+export type ActiveCategory = 'experiences' | 'projects' | 'educations' | 'skills' | null;
 
 export function CVBuilder({ user, skills, onSkillsChanged }: CVBuilderProps) {
   const [matchResult, setMatchResult] = useState<MatchResponse | null>(null);
@@ -22,6 +22,7 @@ export function CVBuilder({ user, skills, onSkillsChanged }: CVBuilderProps) {
   // Selections state
   const [selectedExperiences, setSelectedExperiences] = useState<Set<number>>(new Set());
   const [selectedProjects, setSelectedProjects] = useState<Set<number>>(new Set());
+  const [selectedEducations, setSelectedEducations] = useState<Set<number>>(new Set());
   const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
 
   // Hidden bullets state: Map of itemId to set of hidden bullet indices
@@ -42,6 +43,12 @@ export function CVBuilder({ user, skills, onSkillsChanged }: CVBuilderProps) {
         if (proj.score > 0) projSet.add(proj.id);
       });
       setSelectedProjects(projSet);
+
+      const eduSet = new Set<number>();
+      if (matchResult.educations) {
+        matchResult.educations.forEach(edu => eduSet.add(edu.id));
+      }
+      setSelectedEducations(eduSet);
 
       const skillSet = new Set<string>();
       matchResult.matched_skills.forEach(skill => {
@@ -74,6 +81,8 @@ export function CVBuilder({ user, skills, onSkillsChanged }: CVBuilderProps) {
             setSelectedExperiences={setSelectedExperiences}
             selectedProjects={selectedProjects}
             setSelectedProjects={setSelectedProjects}
+            selectedEducations={selectedEducations}
+            setSelectedEducations={setSelectedEducations}
             selectedSkills={selectedSkills}
             setSelectedSkills={setSelectedSkills}
             hiddenBullets={hiddenBullets}
@@ -104,6 +113,7 @@ export function CVBuilder({ user, skills, onSkillsChanged }: CVBuilderProps) {
             matchResult={matchResult}
             selectedExperiences={selectedExperiences}
             selectedProjects={selectedProjects}
+            selectedEducations={selectedEducations}
             selectedSkills={selectedSkills}
             hiddenBullets={hiddenBullets}
             onEditCategory={(cat) => setActiveCategory(cat)}

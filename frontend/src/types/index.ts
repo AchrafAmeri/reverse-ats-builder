@@ -46,6 +46,34 @@ export interface ExperienceUpdate {
   skill_ids?: number[];
 }
 
+// Education Types
+export interface Education {
+  id: number;
+  user_id: number;
+  degree: string;
+  institution: string;
+  start_date: string;
+  end_date?: string;
+  description?: string;
+}
+
+export interface EducationCreate {
+  user_id: number;
+  degree: string;
+  institution: string;
+  start_date: string;
+  end_date?: string;
+  description?: string;
+}
+
+export interface EducationUpdate {
+  degree?: string;
+  institution?: string;
+  start_date?: string;
+  end_date?: string;
+  description?: string;
+}
+
 // Project Types
 export interface Project {
   id: number;
@@ -80,6 +108,7 @@ export interface User {
   linkedin_url?: string;
   experiences: Experience[];
   projects: Project[];
+  educations: Education[];
 }
 
 export interface UserCreate {
@@ -114,4 +143,5 @@ export interface MatchResponse {
   matched_skills: string[];
   top_experiences: ScoredExperience[];
   top_projects: ScoredProject[];
+  educations: Education[];
 }

@@ -28,6 +28,7 @@ class User(Base):
 
     experiences = relationship("Experience", back_populates="user", cascade="all, delete-orphan")
     projects = relationship("Project", back_populates="user", cascade="all, delete-orphan")
+    educations = relationship("Education", back_populates="user", cascade="all, delete-orphan")
 
 
 class Skill(Base):
@@ -64,3 +65,17 @@ class Project(Base):
 
     user = relationship("User", back_populates="projects")
     skills = relationship("Skill", secondary=project_skills)
+
+
+class Education(Base):
+    __tablename__ = "educations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    degree = Column(String, index=True)
+    institution = Column(String, index=True)
+    start_date = Column(String)
+    end_date = Column(String, nullable=True)
+    description = Column(Text, nullable=True)
+
+    user = relationship("User", back_populates="educations")

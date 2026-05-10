@@ -2,7 +2,7 @@ import regex as re
 
 # Regex to identify CV sections
 SECTION_REGEX = re.compile(
-    r'(?im)^(experience|expériences professionnelles|work history|emploi|education|formation|skills|compétences)[\s:]*$'
+    r'(?im)^(experience|expériences professionnelles|work history|emploi|education|formation|diplômes|skills|compétences)[\s:]*$'
 )
 
 # Robust regex to find date ranges anchoring an experience
