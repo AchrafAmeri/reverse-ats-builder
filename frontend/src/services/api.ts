@@ -60,6 +60,9 @@ export const apiService = {
   uploadCV: (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    return api.post<{ message: string, experiences_added: number, skills_matched: number }>('/import/cv', formData);
+    // Explicitly let browser handle Content-Type for multipart/form-data
+    return api.post<{ message: string, experiences_added: number, skills_matched: number }>('/import/cv', formData, {
+      headers: { 'Content-Type': undefined }
+    });
   },
 };
