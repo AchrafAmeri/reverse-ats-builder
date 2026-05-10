@@ -16,4 +16,4 @@ def match_user_to_job(request: schemas.MatchRequest, db: Session = Depends(get_d
         raise HTTPException(status_code=404, detail="User not found")
 
     match_result = calculate_match(user, request.job_description)
-    return match_result
+    return schemas.MatchResponse(**match_result)

@@ -111,3 +111,4 @@ class MatchResponse(BaseModel):
     matched_skills: List[str]
     top_experiences: List[ScoredExperience]
     top_projects: List[ScoredProject]
+    missing_skills: List[str]
