@@ -7,17 +7,12 @@ import { UserProfileForm } from './components/UserProfileForm';
 import { SkillManager } from './components/SkillManager';
 import { ExperienceList } from './components/ExperienceList';
 import { ProjectList } from './components/ProjectList';
-import { JobMatcher } from './components/JobMatcher';
-import { SkillSuggestions } from './components/SkillSuggestions';
-import { TailoredCV } from './components/TailoredCV';
 import { CVImporter } from './components/CVImporter';
-import type { MatchResponse } from './types';
+import { CVBuilder } from './components/CVBuilder';
 
 function Dashboard() {
   const [activeTab, setActiveTab] = useState<'profile' | 'matcher'>('profile');
   const { user, logout } = useAuth();
-  const [matchResult, setMatchResult] = useState<MatchResponse | null>(null);
-  const [lastJobDescription, setLastJobDescription] = useState<string>('');
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -172,35 +167,11 @@ function Dashboard() {
           </div>
         ) : (
           <div className="space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-1 space-y-6 print:hidden">
-                 <JobMatcher
-                    userId={localUser.id}
-                    onMatchComplete={(result, jd) => {
-                      setMatchResult(result);
-                      if (jd) setLastJobDescription(jd);
-                    }}
-                 />
-                 {lastJobDescription && (
-                   <SkillSuggestions
-                     jobDescription={lastJobDescription}
-                     userSkills={skills}
-                     onSkillAdded={fetchSkillsOnly}
-                   />
-                 )}
-              </div>
-              <div className="lg:col-span-2">
-                {matchResult ? (
-                  <TailoredCV user={localUser} matchResult={matchResult} />
-                ) : (
-                  <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-12 border dark:border-gray-700 text-center flex flex-col items-center justify-center h-full">
-                     <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                     <h3 className="text-xl font-medium text-gray-600 dark:text-gray-300">No CV Generated Yet</h3>
-                     <p className="text-gray-500 mt-2">Paste a job description on the left and click "Generate Tailored CV" to see your match.</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <CVBuilder
+              user={localUser}
+              skills={skills}
+              onSkillsChanged={fetchSkillsOnly}
+            />
           </div>
         )}
       </main>
