@@ -116,28 +116,42 @@ export function TailoredCV({
         </div>
       </header>
 
-      {/* Matched Skills */}
+      {/* Educations */}
       <section className="mb-8 group relative rounded-lg border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-900/50 p-2 -mx-2 transition-colors">
-        <div className="flex justify-between items-end border-b border-gray-300 pb-1 mb-3">
-          <h2 className="text-xl font-bold uppercase tracking-wider text-gray-800">Skills</h2>
+        <div className="flex justify-between items-end border-b border-gray-300 pb-1 mb-4">
+          <h2 className="text-xl font-bold uppercase tracking-wider text-gray-800">Education</h2>
           <button
-            onClick={() => onEditCategory('skills')}
+            onClick={() => onEditCategory('educations')}
             className="opacity-0 group-hover:opacity-100 print:hidden text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1 transition-opacity"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-            Edit Skills
+            Edit Education
           </button>
         </div>
-        {relevantSkills.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {relevantSkills.map((skill, index) => (
-              <span key={index} className="bg-gray-100 px-3 py-1 text-sm font-medium rounded border border-gray-200">
-                {skill}
-              </span>
-            ))}
+        {relevantEducations.length > 0 ? (
+          <div className="space-y-6">
+            {relevantEducations.map(edu => {
+              const filteredDesc = filterDescription(edu.description, `edu_${edu.id}`);
+              return (
+                <div key={edu.id} className="relative">
+                  <div className="flex justify-between items-baseline mb-1">
+                    <h3 className="text-lg font-bold text-gray-900">{edu.degree}</h3>
+                    <span className="text-sm font-semibold text-gray-600 whitespace-nowrap ml-4">
+                      {edu.start_date} - {edu.end_date || 'Present'}
+                    </span>
+                  </div>
+                  <div className="text-md font-medium text-blue-700 mb-2">{edu.institution}</div>
+                  {filteredDesc && (
+                    <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                      {highlightSkills(filteredDesc, matched_skills)}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ) : (
-          <p className="text-sm text-gray-500 italic print:hidden">No skills selected.</p>
+          <p className="text-sm text-gray-500 italic print:hidden">No education selected.</p>
         )}
       </section>
 
@@ -180,47 +194,8 @@ export function TailoredCV({
         )}
       </section>
 
-      {/* Educations */}
-      <section className="mb-8 group relative rounded-lg border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-900/50 p-2 -mx-2 transition-colors">
-        <div className="flex justify-between items-end border-b border-gray-300 pb-1 mb-4">
-          <h2 className="text-xl font-bold uppercase tracking-wider text-gray-800">Education</h2>
-          <button
-            onClick={() => onEditCategory('educations')}
-            className="opacity-0 group-hover:opacity-100 print:hidden text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1 transition-opacity"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-            Edit Education
-          </button>
-        </div>
-        {relevantEducations.length > 0 ? (
-          <div className="space-y-6">
-            {relevantEducations.map(edu => {
-              const filteredDesc = filterDescription(edu.description, `edu_${edu.id}`);
-              return (
-                <div key={edu.id} className="relative">
-                  <div className="flex justify-between items-baseline mb-1">
-                    <h3 className="text-lg font-bold text-gray-900">{edu.degree}</h3>
-                    <span className="text-sm font-semibold text-gray-600 whitespace-nowrap ml-4">
-                      {edu.start_date} - {edu.end_date || 'Present'}
-                    </span>
-                  </div>
-                  <div className="text-md font-medium text-blue-700 mb-2">{edu.institution}</div>
-                  {filteredDesc && (
-                    <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
-                      {highlightSkills(filteredDesc, matched_skills)}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500 italic print:hidden">No education selected.</p>
-        )}
-      </section>
-
       {/* Projects */}
-      <section className="group relative rounded-lg border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-900/50 p-2 -mx-2 transition-colors">
+      <section className="mb-8 group relative rounded-lg border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-900/50 p-2 -mx-2 transition-colors">
         <div className="flex justify-between items-end border-b border-gray-300 pb-1 mb-4">
           <h2 className="text-xl font-bold uppercase tracking-wider text-gray-800">Projects</h2>
           <button
@@ -256,6 +231,31 @@ export function TailoredCV({
           </div>
         ) : (
           <p className="text-sm text-gray-500 italic print:hidden">No projects selected.</p>
+        )}
+      </section>
+
+      {/* Matched Skills */}
+      <section className="group relative rounded-lg border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-900/50 p-2 -mx-2 transition-colors">
+        <div className="flex justify-between items-end border-b border-gray-300 pb-1 mb-3">
+          <h2 className="text-xl font-bold uppercase tracking-wider text-gray-800">Skills</h2>
+          <button
+            onClick={() => onEditCategory('skills')}
+            className="opacity-0 group-hover:opacity-100 print:hidden text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1 transition-opacity"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+            Edit Skills
+          </button>
+        </div>
+        {relevantSkills.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {relevantSkills.map((skill, index) => (
+              <span key={index} className="bg-gray-100 px-3 py-1 text-sm font-medium rounded border border-gray-200">
+                {skill}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 italic print:hidden">No skills selected.</p>
         )}
       </section>
 
