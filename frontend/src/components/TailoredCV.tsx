@@ -1,13 +1,27 @@
 import { usePDF } from 'react-to-pdf';
 import type { MatchResponse, User } from '../types';
+import type { ActiveCategory } from './CVBuilder';
 
 interface TailoredCVProps {
   user: User;
   matchResult: MatchResponse;
+  selectedExperiences: Set<number>;
+  selectedProjects: Set<number>;
+  selectedSkills: Set<string>;
+  hiddenBullets: Record<string, Set<number>>;
+  onEditCategory: (category: ActiveCategory) => void;
 }
 
-export function TailoredCV({ user, matchResult }: TailoredCVProps) {
-  const { top_experiences, top_projects, matched_skills } = matchResult;
+export function TailoredCV({
+  user,
+  matchResult,
+  selectedExperiences,
+  selectedProjects,
+  selectedSkills,
+  hiddenBullets,
+  onEditCategory
+}: TailoredCVProps) {
+  const { matched_skills } = matchResult;
   const { toPDF, targetRef } = usePDF({ filename: 'tailored-cv.pdf' });
 
   // Helper to highlight matched skills in text
@@ -42,12 +56,22 @@ export function TailoredCV({ user, matchResult }: TailoredCVProps) {
     return new Date(dateString).toLocaleDateString(undefined, { year: 'numeric', month: 'short' });
   };
 
-  // Filter out experiences/projects with 0 score
-  const relevantExperiences = top_experiences.filter(exp => exp.score > 0);
-  const relevantProjects = top_projects.filter(proj => proj.score > 0);
+  // Filter based on selected IDs and preserve original order or sorted order?
+  // Let's use the ones from user profile but only those selected.
+  const relevantExperiences = user.experiences.filter(exp => selectedExperiences.has(exp.id));
+  const relevantProjects = user.projects.filter(proj => selectedProjects.has(proj.id));
+  const relevantSkills = Array.from(selectedSkills);
+
+  // Helper to filter hidden bullets from description
+  const filterDescription = (description: string | undefined, itemKey: string) => {
+    if (!description) return '';
+    const lines = description.split('\n');
+    const visibleLines = lines.filter((_, i) => !hiddenBullets[itemKey]?.has(i));
+    return visibleLines.join('\n');
+  };
 
   return (
-    <div ref={targetRef} className="bg-white text-gray-900 shadow-lg rounded-lg p-8 md:p-12 border border-gray-200 mx-auto" style={{ maxWidth: '210mm', minHeight: '297mm' }}>
+    <div ref={targetRef} className="bg-white text-gray-900 shadow-lg rounded-lg p-8 md:p-12 border border-gray-200 mx-auto transition-all" style={{ maxWidth: '210mm', minHeight: '297mm' }}>
       {/* Print Button (hidden in print view) */}
       <div data-html2canvas-ignore="true" className="flex justify-end gap-2 mb-4 print:hidden">
          <button
@@ -90,74 +114,108 @@ export function TailoredCV({ user, matchResult }: TailoredCVProps) {
       </header>
 
       {/* Matched Skills */}
-      {matched_skills.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-xl font-bold uppercase tracking-wider border-b border-gray-300 pb-1 mb-3 text-gray-800">Relevant Skills</h2>
+      <section className="mb-8 group relative rounded-lg border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-900/50 p-2 -mx-2 transition-colors">
+        <div className="flex justify-between items-end border-b border-gray-300 pb-1 mb-3">
+          <h2 className="text-xl font-bold uppercase tracking-wider text-gray-800">Skills</h2>
+          <button
+            onClick={() => onEditCategory('skills')}
+            className="opacity-0 group-hover:opacity-100 print:hidden text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1 transition-opacity"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+            Edit Skills
+          </button>
+        </div>
+        {relevantSkills.length > 0 ? (
           <div className="flex flex-wrap gap-2">
-            {matched_skills.map((skill, index) => (
-              <span key={index} className="bg-gray-100 px-3 py-1 text-sm font-medium rounded-full border border-gray-200">
+            {relevantSkills.map((skill, index) => (
+              <span key={index} className="bg-gray-100 px-3 py-1 text-sm font-medium rounded border border-gray-200">
                 {skill}
               </span>
             ))}
           </div>
-        </section>
-      )}
+        ) : (
+          <p className="text-sm text-gray-500 italic print:hidden">No skills selected.</p>
+        )}
+      </section>
 
       {/* Experience */}
-      {relevantExperiences.length > 0 ? (
-        <section className="mb-8">
-          <h2 className="text-xl font-bold uppercase tracking-wider border-b border-gray-300 pb-1 mb-4 text-gray-800">Professional Experience</h2>
+      <section className="mb-8 group relative rounded-lg border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-900/50 p-2 -mx-2 transition-colors">
+        <div className="flex justify-between items-end border-b border-gray-300 pb-1 mb-4">
+          <h2 className="text-xl font-bold uppercase tracking-wider text-gray-800">Professional Experience</h2>
+          <button
+            onClick={() => onEditCategory('experiences')}
+            className="opacity-0 group-hover:opacity-100 print:hidden text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1 transition-opacity"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+            Edit Experience
+          </button>
+        </div>
+        {relevantExperiences.length > 0 ? (
           <div className="space-y-6">
-            {relevantExperiences.map(exp => (
-              <div key={exp.id} className="relative">
-                <div className="flex justify-between items-baseline mb-1">
-                  <h3 className="text-lg font-bold text-gray-900">{exp.title}</h3>
-                  <span className="text-sm font-semibold text-gray-600 whitespace-nowrap ml-4">
-                    {formatDate(exp.start_date)} - {formatDate(exp.end_date)}
-                  </span>
-                </div>
-                <div className="text-md font-medium text-blue-700 mb-2">{exp.company}</div>
-                {exp.description && (
-                  <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
-                    {highlightSkills(exp.description, matched_skills)}
-                  </p>
-                )}
-                {/* Print view only: small score badge if desired, but usually CVs don't show match scores. Let's omit score from printed CV to look professional. */}
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : (
-         <div className="mb-8 p-4 bg-red-50 text-red-700 border border-red-200 rounded">
-            <strong>No Relevant Experience Found:</strong> Add more experiences to your profile or try a different job description.
-         </div>
-      )}
-
-      {/* Projects */}
-      {relevantProjects.length > 0 && (
-        <section>
-          <h2 className="text-xl font-bold uppercase tracking-wider border-b border-gray-300 pb-1 mb-4 text-gray-800">Relevant Projects</h2>
-          <div className="space-y-6">
-            {relevantProjects.map(proj => (
-              <div key={proj.id}>
-                <div className="flex justify-between items-baseline mb-1">
-                  <h3 className="text-lg font-bold text-gray-900">{proj.name}</h3>
-                  {proj.url && (
-                    <a href={proj.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
-                      View Project
-                    </a>
+            {relevantExperiences.map(exp => {
+              const filteredDesc = filterDescription(exp.description, `exp_${exp.id}`);
+              return (
+                <div key={exp.id} className="relative">
+                  <div className="flex justify-between items-baseline mb-1">
+                    <h3 className="text-lg font-bold text-gray-900">{exp.title}</h3>
+                    <span className="text-sm font-semibold text-gray-600 whitespace-nowrap ml-4">
+                      {formatDate(exp.start_date)} - {formatDate(exp.end_date)}
+                    </span>
+                  </div>
+                  <div className="text-md font-medium text-blue-700 mb-2">{exp.company}</div>
+                  {filteredDesc && (
+                    <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                      {highlightSkills(filteredDesc, matched_skills)}
+                    </p>
                   )}
                 </div>
-                {proj.description && (
-                  <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap mt-1">
-                    {highlightSkills(proj.description, matched_skills)}
-                  </p>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
-        </section>
-      )}
+        ) : (
+          <p className="text-sm text-gray-500 italic print:hidden">No experiences selected.</p>
+        )}
+      </section>
+
+      {/* Projects */}
+      <section className="group relative rounded-lg border-2 border-transparent hover:border-blue-200 dark:hover:border-blue-900/50 p-2 -mx-2 transition-colors">
+        <div className="flex justify-between items-end border-b border-gray-300 pb-1 mb-4">
+          <h2 className="text-xl font-bold uppercase tracking-wider text-gray-800">Projects</h2>
+          <button
+            onClick={() => onEditCategory('projects')}
+            className="opacity-0 group-hover:opacity-100 print:hidden text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1 transition-opacity"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+            Edit Projects
+          </button>
+        </div>
+        {relevantProjects.length > 0 ? (
+          <div className="space-y-6">
+            {relevantProjects.map(proj => {
+              const filteredDesc = filterDescription(proj.description, `proj_${proj.id}`);
+              return (
+                <div key={proj.id}>
+                  <div className="flex justify-between items-baseline mb-1">
+                    <h3 className="text-lg font-bold text-gray-900">{proj.name}</h3>
+                    {proj.url && (
+                      <a href={proj.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
+                        View Project
+                      </a>
+                    )}
+                  </div>
+                  {filteredDesc && (
+                    <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap mt-1">
+                      {highlightSkills(filteredDesc, matched_skills)}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 italic print:hidden">No projects selected.</p>
+        )}
+      </section>
 
       {/* CSS for printing */}
       <style dangerouslySetInnerHTML={{__html: `
