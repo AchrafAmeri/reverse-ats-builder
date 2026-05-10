@@ -12,6 +12,8 @@ interface SelectionPanelProps {
   setSelectedExperiences: Dispatch<SetStateAction<Set<number>>>;
   selectedProjects: Set<number>;
   setSelectedProjects: Dispatch<SetStateAction<Set<number>>>;
+  selectedEducations: Set<number>;
+  setSelectedEducations: Dispatch<SetStateAction<Set<number>>>;
   selectedSkills: Set<string>;
   setSelectedSkills: Dispatch<SetStateAction<Set<string>>>;
   hiddenBullets: Record<string, Set<number>>;
@@ -27,6 +29,8 @@ export function SelectionPanel({
   setSelectedExperiences,
   selectedProjects,
   setSelectedProjects,
+  selectedEducations,
+  setSelectedEducations,
   selectedSkills,
   setSelectedSkills,
   hiddenBullets,
@@ -124,6 +128,69 @@ export function SelectionPanel({
                   {isExpanded && exp.description && isSelected && (
                     <div className="mt-3 space-y-2 border-t dark:border-gray-700 pt-2">
                       {exp.description.split('\n').map((line, i) => {
+                        const trimmed = line.trim();
+                        if (!trimmed) return null;
+                        const isBulletHidden = hiddenBullets[itemKey]?.has(i);
+                        return (
+                          <label key={i} className={`flex items-start gap-2 text-sm cursor-pointer ${isBulletHidden ? 'opacity-50 line-through' : ''}`}>
+                            <input
+                              type="checkbox"
+                              checked={!isBulletHidden}
+                              onChange={() => toggleBullet(itemKey, i)}
+                              className="mt-1 h-3 w-3 rounded text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-gray-700 dark:text-gray-300 line-clamp-2" title={trimmed}>{trimmed}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {category === 'educations' && user.educations.map(edu => {
+          const isSelected = selectedEducations.has(edu.id);
+          const itemKey = `edu_${edu.id}`;
+          const isExpanded = expandedItems.has(itemKey);
+
+          return (
+            <div key={edu.id} className={`p-4 border rounded-md transition-colors ${isSelected ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={(e) => {
+                    setSelectedEducations(prev => {
+                      const next = new Set(prev);
+                      if (e.target.checked) next.add(edu.id);
+                      else next.delete(edu.id);
+                      return next;
+                    });
+                  }}
+                  className="mt-1 h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-semibold text-gray-900 dark:text-white truncate" title={edu.degree}>{edu.degree}</h3>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{edu.institution}</p>
+
+                  {edu.description && isSelected && (
+                    <button
+                      onClick={() => toggleExpand(itemKey)}
+                      className="text-xs text-blue-600 dark:text-blue-400 mt-2 hover:underline flex items-center gap-1"
+                    >
+                      {isExpanded ? 'Hide description details' : 'Edit description bullets'}
+                      <svg className={`w-3 h-3 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                    </button>
+                  )}
+
+                  {isExpanded && edu.description && isSelected && (
+                    <div className="mt-3 space-y-2 border-t dark:border-gray-700 pt-2">
+                      {edu.description.split('\n').map((line, i) => {
                         const trimmed = line.trim();
                         if (!trimmed) return null;
                         const isBulletHidden = hiddenBullets[itemKey]?.has(i);

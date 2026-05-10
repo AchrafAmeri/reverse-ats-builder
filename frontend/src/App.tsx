@@ -7,6 +7,7 @@ import { UserProfileForm } from './components/UserProfileForm';
 import { SkillManager } from './components/SkillManager';
 import { ExperienceList } from './components/ExperienceList';
 import { ProjectList } from './components/ProjectList';
+import { EducationList } from './components/EducationList';
 import { CVImporter } from './components/CVImporter';
 import { CVBuilder } from './components/CVBuilder';
 
@@ -163,6 +164,15 @@ function Dashboard() {
                   onProjectDeleted={refreshUserOnly}
                 />
               </div>
+            </div>
+
+            <div className="mt-8">
+              <EducationList
+                userId={localUser.id}
+                educations={localUser.educations || []}
+                onEducationAdded={refreshUserOnly}
+                onEducationDeleted={refreshUserOnly}
+              />
             </div>
           </div>
         ) : (

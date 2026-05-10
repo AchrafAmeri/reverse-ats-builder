@@ -47,6 +47,12 @@ def parse_cv_pdf(file_bytes: bytes, db_session: Session = None):
     if not experience_lines:
         experience_lines = [line.strip() for line in lines if line.strip()]
 
+    education_lines = []
+    # Combine lines for all education-related sections
+    for sec in ["education", "formation", "diplômes"]:
+        if sec in section_lines:
+            education_lines.extend(section_lines[sec])
+
     # 3. Experience Extraction (Date Anchoring)
     experiences = []
 
@@ -122,6 +128,63 @@ def parse_cv_pdf(file_bytes: bytes, db_session: Session = None):
             "description": description
         })
 
+    # 3.5 Education Extraction
+    educations = []
+    if education_lines:
+        education_text = "\n".join(education_lines)
+        edu_matches = list(DATE_REGEX.finditer(education_text))
+
+        if edu_matches:
+            for idx, match in enumerate(edu_matches):
+                start_idx = match.start()
+                chunk_start = education_text.rfind('\n', 0, start_idx)
+                if chunk_start == -1:
+                    chunk_start = 0
+                else:
+                    chunk_start += 1
+
+                if idx + 1 < len(edu_matches):
+                    next_start = edu_matches[idx+1].start()
+                    chunk_end = education_text.rfind('\n', start_idx, next_start)
+                    if chunk_end == -1:
+                        chunk_end = next_start
+                else:
+                    chunk_end = len(education_text)
+
+                chunk_text = education_text[chunk_start:chunk_end].strip()
+                date_str = match.group(0)
+
+                start_date = ""
+                end_date = None
+
+                years = re.findall(r'\d{4}', date_str)
+                if years:
+                    start_date = years[0]
+                    if len(years) > 1:
+                        end_date = years[1]
+
+                chunk_lines = chunk_text.split('\n')
+                degree_inst_text = "Unknown Degree"
+                for cl in chunk_lines:
+                    if not DATE_REGEX.search(cl) and len(cl.strip()) > 3:
+                        degree_inst_text = cl.strip()
+                        break
+
+                parts = re.split(r'[,|\-]', degree_inst_text, maxsplit=1)
+                degree = parts[0].strip() if parts else "Unknown Degree"
+                institution = parts[1].strip() if len(parts) > 1 else "Unknown Institution"
+
+                desc_lines = [cl.strip() for cl in chunk_lines if cl.strip() != degree_inst_text and not DATE_REGEX.search(cl)]
+                description = " ".join(desc_lines)
+
+                educations.append({
+                    "degree": degree[:255] if degree else "Degree",
+                    "institution": institution[:255] if institution else "Institution",
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "description": description
+                })
+
     # 4. Skill Extraction: Scan entire text against TECH_SKILLS_SEED
     matched_skills_names = set()
     text_lower = text.lower()
@@ -141,5 +204,6 @@ def parse_cv_pdf(file_bytes: bytes, db_session: Session = None):
 
     return {
         "skills": list(matched_skills_names),
-        "experiences": experiences
+        "experiences": experiences,
+        "educations": educations
     }

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { User, UserCreate, UserUpdate, Skill, SkillCreate, SkillUpdate, Experience, ExperienceCreate, ExperienceUpdate, Project, ProjectCreate, ProjectUpdate, MatchResponse, MatchRequest } from '../types';
+import type { User, UserCreate, UserUpdate, Skill, SkillCreate, SkillUpdate, Experience, ExperienceCreate, ExperienceUpdate, Education, EducationCreate, EducationUpdate, Project, ProjectCreate, ProjectUpdate, MatchResponse, MatchRequest } from '../types';
 
 const API_BASE_URL = 'http://localhost:8000/api/v1';
 
@@ -44,6 +44,13 @@ export const apiService = {
   createExperience: (data: ExperienceCreate) => api.post<Experience>('/experiences', data),
   updateExperience: (id: number, data: ExperienceUpdate) => api.put<Experience>(`/experiences/${id}`, data),
   deleteExperience: (id: number) => api.delete(`/experiences/${id}`),
+
+  // Educations
+  getEducations: () => api.get<Education[]>('/educations'),
+  getEducation: (id: number) => api.get<Education>(`/educations/${id}`),
+  createEducation: (data: EducationCreate) => api.post<Education>('/educations', data),
+  updateEducation: (id: number, data: EducationUpdate) => api.put<Education>(`/educations/${id}`, data),
+  deleteEducation: (id: number) => api.delete(`/educations/${id}`),
 
   // Projects
   getProjects: () => api.get<Project[]>('/projects'),

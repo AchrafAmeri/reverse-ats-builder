@@ -31,6 +31,7 @@ async def import_cv(
 
     matched_skill_names = parsed_data.get("skills", [])
     extracted_experiences = parsed_data.get("experiences", [])
+    extracted_educations = parsed_data.get("educations", [])
 
     # Process skills: get existing or create new ones
     db_skills = []
@@ -73,10 +74,24 @@ async def import_cv(
         db.add(new_experience)
         experiences_added += 1
 
+    educations_added = 0
+    for edu_data in extracted_educations:
+        new_education = models.Education(
+            user_id=current_user.id,
+            degree=edu_data["degree"],
+            institution=edu_data["institution"],
+            start_date=edu_data["start_date"],
+            end_date=edu_data["end_date"],
+            description=edu_data["description"]
+        )
+        db.add(new_education)
+        educations_added += 1
+
     db.commit()
 
     return {
-        "message": f"Imported {experiences_added} experiences and matched {len(db_skills)} skills.",
+        "message": f"Imported {experiences_added} experiences, {educations_added} educations and matched {len(db_skills)} skills.",
         "experiences_added": experiences_added,
+        "educations_added": educations_added,
         "skills_matched": len(db_skills)
     }
