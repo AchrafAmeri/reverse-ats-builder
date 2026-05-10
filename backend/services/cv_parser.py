@@ -1,11 +1,12 @@
-import re
+import regex as re
 import io
 from datetime import datetime
 from pypdf import PdfReader
 from sqlalchemy.orm import Session
 import models
+from utils.cv_heuristics import SECTION_REGEX, DATE_REGEX, TECH_SKILLS_SEED
 
-def parse_cv_pdf(file_bytes: bytes, db_session: Session):
+def parse_cv_pdf(file_bytes: bytes, db_session: Session = None):
     reader = PdfReader(io.BytesIO(file_bytes))
     text = ""
     for page in reader.pages:
@@ -13,93 +14,132 @@ def parse_cv_pdf(file_bytes: bytes, db_session: Session):
         if extracted:
             text += extracted + "\n"
 
-    # Extract Skills
-    all_skills = db_session.query(models.Skill).all()
-    matched_skills = []
-    text_lower = text.lower()
+    # 1. Clean Text: remove excessive whitespace but preserve newlines
+    text = re.sub(r'[ \t]+', ' ', text)
 
-    # We use word boundaries to avoid matching substrings
-    for skill in all_skills:
-        skill_name_lower = skill.name.lower()
-        # Escape special characters in skill names
-        escaped_skill = re.escape(skill_name_lower)
-        pattern = r'\b' + escaped_skill + r'\b'
-        if re.search(pattern, text_lower):
-            matched_skills.append(skill)
+    # 2. Segmentation
+    # Split text by SECTION_REGEX
+    sections = {}
+    current_section = "general"
+    lines = text.split("\n")
+    section_lines = {current_section: []}
 
-    # Extract Experiences
-    # Heuristic: (20\d{2})\s*-\s*(20\d{2}|Present)
-    # We split the text by these date ranges to find the blocks of text associated with them.
-    # A robust way is to find all matches and their positions.
-    date_pattern = r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|[a-zA-Z]+)?\s*20\d{2})\s*-\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|[a-zA-Z]+)?\s*20\d{2}|Present|present|Current|current)'
+    for line in lines:
+        stripped_line = line.strip()
+        if not stripped_line:
+            continue
 
+        match = SECTION_REGEX.match(stripped_line)
+        if match:
+            current_section = match.group(1).lower()
+            if current_section not in section_lines:
+                section_lines[current_section] = []
+        else:
+            section_lines[current_section].append(stripped_line)
+
+    experience_lines = []
+    # Combine lines for all experience-related sections
+    for sec in ["experience", "expériences professionnelles", "work history", "emploi"]:
+        if sec in section_lines:
+            experience_lines.extend(section_lines[sec])
+
+    # If no explicit experience section was found, we might fallback to all lines
+    if not experience_lines:
+        experience_lines = [line.strip() for line in lines if line.strip()]
+
+    # 3. Experience Extraction (Date Anchoring)
     experiences = []
 
-    # Simple heuristic: look for date ranges. The text *before* the date might be the title/company,
-    # or the text *after* the date. Let's try to extract lines with dates, and the lines following as description.
-    lines = [line.strip() for line in text.split('\n') if line.strip()]
+    # We will split the experience lines into chunks using the DATE_REGEX
+    experience_text = "\n".join(experience_lines)
 
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        # Basic date match: 20xx - 20xx or 20xx - Present
-        match = re.search(r'(20\d{2})\s*[-to]+\s*(20\d{2}|[pP]resent|[cC]urrent)', line)
-        if match:
-            start_year = match.group(1)
-            end_year_str = match.group(2)
+    # Find all date matches
+    matches = list(DATE_REGEX.finditer(experience_text))
 
-            # Create a basic date (January 1st of the year)
+    for idx, match in enumerate(matches):
+        start_idx = match.start()
+        # The chunk goes from the beginning of the line containing the match up to the next match
+        chunk_start = experience_text.rfind('\n', 0, start_idx)
+        if chunk_start == -1:
+            chunk_start = 0
+        else:
+            chunk_start += 1 # skip newline
+
+        if idx + 1 < len(matches):
+            next_start = matches[idx+1].start()
+            chunk_end = experience_text.rfind('\n', start_idx, next_start)
+            if chunk_end == -1:
+                chunk_end = next_start
+        else:
+            chunk_end = len(experience_text)
+
+        chunk_text = experience_text[chunk_start:chunk_end].strip()
+        date_str = match.group(0)
+
+        # Parse the date string simply to extract a rough start/end date
+        # Fallback logic for date parsing
+        start_date = datetime.now().date()
+        end_date = None
+
+        # very basic date year extraction
+        years = re.findall(r'\d{4}', date_str)
+        if years:
             try:
-                start_date = datetime.strptime(start_year, "%Y").date()
+                start_date = datetime.strptime(years[0], "%Y").date()
             except ValueError:
-                start_date = datetime.now().date()
+                pass
 
-            end_date = None
-            if end_year_str.lower() not in ['present', 'current']:
+            if len(years) > 1:
                 try:
-                    end_date = datetime.strptime(end_year_str, "%Y").date()
+                    end_date = datetime.strptime(years[1], "%Y").date()
                 except ValueError:
                     pass
 
-            # The title and company might be on this line or the previous line
-            title_company_line = line
-            # Remove the date from the line to get title/company
-            title_company_text = re.sub(r'(20\d{2})\s*[-to]+\s*(20\d{2}|[pP]resent|[cC]urrent)', '', line).strip()
+        # The first line before or after the date might be the title/company
+        chunk_lines = chunk_text.split('\n')
+        title_company_text = "Unknown Title"
 
-            if not title_company_text and i > 0:
-                title_company_text = lines[i-1]
+        # Try to find a non-date line for title/company
+        for cl in chunk_lines:
+            if not DATE_REGEX.search(cl) and len(cl.strip()) > 3:
+                title_company_text = cl.strip()
+                break
 
-            # Split title and company (often separated by comma, dash, or pipe)
-            parts = re.split(r'[,|\-]', title_company_text, maxsplit=1)
-            title = parts[0].strip() if parts else "Unknown Title"
-            company = parts[1].strip() if len(parts) > 1 else "Unknown Company"
-            if not title:
-                title = "Unknown Title"
+        # Split title and company
+        parts = re.split(r'[,|\-]', title_company_text, maxsplit=1)
+        title = parts[0].strip() if parts else "Unknown Title"
+        company = parts[1].strip() if len(parts) > 1 else "Unknown Company"
 
-            # Description is the following lines until the next date or empty line (or we just take 2-3 lines)
-            desc_lines = []
-            j = i + 1
-            while j < len(lines) and j < i + 5: # Limit description to avoid taking too much
-                next_line = lines[j]
-                if re.search(r'(20\d{2})\s*[-to]+\s*(20\d{2}|[pP]resent|[cC]urrent)', next_line):
-                    break
-                desc_lines.append(next_line)
-                j += 1
+        # Description is the rest
+        desc_lines = [cl.strip() for cl in chunk_lines if cl.strip() != title_company_text and not DATE_REGEX.search(cl)]
+        description = " ".join(desc_lines)
 
-            description = " ".join(desc_lines)
+        experiences.append({
+            "title": title[:255] if title else "Experience",
+            "company": company[:255] if company else "Company",
+            "start_date": start_date,
+            "end_date": end_date,
+            "description": description
+        })
 
-            experiences.append({
-                "title": title[:255] if title else "Experience", # limit length
-                "company": company[:255] if company else "Company",
-                "start_date": start_date,
-                "end_date": end_date,
-                "description": description
-            })
+    # 4. Skill Extraction: Scan entire text against TECH_SKILLS_SEED
+    matched_skills_names = set()
+    text_lower = text.lower()
 
-            i = j - 1 # Skip processed lines
-        i += 1
+    for skill in TECH_SKILLS_SEED:
+        escaped_skill = re.escape(skill.lower())
+        pattern = r'\b' + escaped_skill + r'\b'
+        if re.search(pattern, text_lower):
+            matched_skills_names.add(skill)
+
+    # For matching to DB objects if a DB session is provided (for backwards compatibility/ease)
+    matched_skills = []
+    if db_session:
+        # Actually this will be handled in the router according to instructions,
+        # but we return the raw strings as well or mock models if needed.
+        pass
 
     return {
-        "skills": matched_skills,
+        "skills": list(matched_skills_names),
         "experiences": experiences
     }
