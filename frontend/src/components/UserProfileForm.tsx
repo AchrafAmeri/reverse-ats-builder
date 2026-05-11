@@ -8,6 +8,8 @@ interface UserProfileFormProps {
   onUpdate: (user: User) => void;
 }
 
+import { useEffect } from 'react';
+
 export const UserProfileForm: React.FC<UserProfileFormProps> = ({ user, onUpdate }) => {
   const [formData, setFormData] = useState<UserUpdate>({
     name: user.name,
@@ -17,6 +19,15 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({ user, onUpdate
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setFormData({
+      name: user.name,
+      email: user.email,
+      phone: user.phone || '',
+      linkedin_url: user.linkedin_url || '',
+    });
+  }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
