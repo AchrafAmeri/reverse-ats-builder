@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import type { Project, ProjectCreate, Skill } from '../types';
+import type { Project, ProjectCreate, ProjectUpdate, Skill } from '../types';
 import { apiService } from '../services/api';
-import { Code, Plus, X, ExternalLink } from 'lucide-react';
+import { Code, Plus, X, ExternalLink, Edit2 } from 'lucide-react';
 
 interface ProjectListProps {
   userId: number;
@@ -13,6 +13,7 @@ interface ProjectListProps {
 
 export const ProjectList: React.FC<ProjectListProps> = ({ userId, projects, allSkills, onProjectAdded, onProjectDeleted }) => {
   const [isAdding, setIsAdding] = useState(false);
+  const [editingProj, setEditingProj] = useState<Project | null>(null);
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Delete this project?')) return;
@@ -34,21 +35,30 @@ export const ProjectList: React.FC<ProjectListProps> = ({ userId, projects, allS
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Projects</h2>
         </div>
         <button
-          onClick={() => setIsAdding(!isAdding)}
+          onClick={() => {
+            if (isAdding || editingProj) {
+              setIsAdding(false);
+              setEditingProj(null);
+            } else {
+              setIsAdding(true);
+            }
+          }}
           className="flex items-center gap-1 text-sm bg-orange-50 text-orange-600 dark:bg-orange-900 dark:text-orange-300 px-3 py-1.5 rounded-md hover:bg-orange-100 dark:hover:bg-orange-800 transition-colors"
         >
-          {isAdding ? <X size={16} /> : <Plus size={16} />}
-          {isAdding ? 'Cancel' : 'Add Project'}
+          {(isAdding || editingProj) ? <X size={16} /> : <Plus size={16} />}
+          {(isAdding || editingProj) ? 'Cancel' : 'Add Project'}
         </button>
       </div>
 
-      {isAdding && (
+      {(isAdding || editingProj) && (
         <div className="mb-8 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border dark:border-gray-600">
           <ProjectForm
             userId={userId}
             allSkills={allSkills}
+            existingProject={editingProj}
             onSuccess={() => {
               setIsAdding(false);
+              setEditingProj(null);
               onProjectAdded();
             }}
           />
@@ -63,12 +73,24 @@ export const ProjectList: React.FC<ProjectListProps> = ({ userId, projects, allS
             <div key={proj.id} className="border dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
               <div className="flex justify-between items-start mb-2">
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{proj.name}</h3>
-                <button
-                  onClick={() => handleDelete(proj.id)}
-                  className="text-gray-400 hover:text-red-500"
-                >
-                  <X size={18} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setEditingProj(proj);
+                      setIsAdding(false);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="text-gray-400 hover:text-blue-500"
+                  >
+                    <Edit2 size={18} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(proj.id)}
+                    className="text-gray-400 hover:text-red-500"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
               </div>
 
               {proj.url && (
@@ -103,16 +125,19 @@ export const ProjectList: React.FC<ProjectListProps> = ({ userId, projects, allS
 interface ProjectFormProps {
   userId: number;
   allSkills: Skill[];
+  existingProject?: Project | null;
   onSuccess: () => void;
 }
 
-const ProjectForm: React.FC<ProjectFormProps> = ({ userId, allSkills, onSuccess }) => {
+const ProjectForm: React.FC<ProjectFormProps> = ({ userId, allSkills, existingProject, onSuccess }) => {
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    url: '',
+    name: existingProject?.name || '',
+    description: existingProject?.description || '',
+    url: existingProject?.url || '',
   });
-  const [selectedSkillIds, setSelectedSkillIds] = useState<number[]>([]);
+  const [selectedSkillIds, setSelectedSkillIds] = useState<number[]>(
+    existingProject?.skills.map(s => s.id) || []
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -131,17 +156,27 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ userId, allSkills, onSuccess 
     setIsLoading(true);
     setError(null);
     try {
-      const payload: ProjectCreate = {
-        user_id: userId,
-        name: formData.name,
-        description: formData.description || undefined,
-        url: formData.url || undefined,
-        skill_ids: selectedSkillIds,
-      };
-      await apiService.createProject(payload);
+      if (existingProject) {
+        const payload: ProjectUpdate = {
+          name: formData.name,
+          description: formData.description || undefined,
+          url: formData.url || undefined,
+          skill_ids: selectedSkillIds,
+        };
+        await apiService.updateProject(existingProject.id, payload);
+      } else {
+        const payload: ProjectCreate = {
+          user_id: userId,
+          name: formData.name,
+          description: formData.description || undefined,
+          url: formData.url || undefined,
+          skill_ids: selectedSkillIds,
+        };
+        await apiService.createProject(payload);
+      }
       onSuccess();
     } catch (err: any) {
-      setError(err.message || 'Failed to add project');
+      setError(err.message || `Failed to ${existingProject ? 'update' : 'add'} project`);
     } finally {
       setIsLoading(false);
     }
@@ -189,7 +224,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ userId, allSkills, onSuccess 
 
       <div className="flex justify-end">
         <button type="submit" disabled={isLoading} className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700 disabled:opacity-50">
-          {isLoading ? 'Saving...' : 'Save Project'}
+          {isLoading ? 'Saving...' : (existingProject ? 'Update Project' : 'Save Project')}
         </button>
       </div>
     </form>
