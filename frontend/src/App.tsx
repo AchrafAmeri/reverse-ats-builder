@@ -68,7 +68,7 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+      <div className="flex flex-col flex-1 w-full min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
         <div className="text-xl font-semibold text-gray-600 dark:text-gray-300">Loading Profile...</div>
       </div>
     );
@@ -76,7 +76,7 @@ function Dashboard() {
 
   if (error || !localUser) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
+      <div className="flex flex-col flex-1 w-full min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
         <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md max-w-md w-full text-center border-t-4 border-red-500">
           <h2 className="text-2xl font-bold text-red-600 mb-4">Connection Error</h2>
           <p className="text-gray-700 dark:text-gray-300 mb-6">{error}</p>
@@ -92,7 +92,7 @@ function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pb-12 w-full">
+    <div className="flex flex-col flex-1 w-full min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pb-12">
       <header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 mb-8 sticky top-0 z-10 w-full">
         <div className="w-full max-w-full px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
           <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
@@ -147,8 +147,14 @@ function Dashboard() {
               <SkillManager skills={skills} onSkillsChanged={fetchSkillsOnly} />
             </div>
 
-              {/* Right Column: Experiences & Projects */}
+              {/* Right Column: Educations, Experiences & Projects */}
               <div className="lg:col-span-2 space-y-8">
+                <EducationList
+                  userId={localUser.id}
+                  educations={localUser.educations || []}
+                  onEducationAdded={refreshUserOnly}
+                  onEducationDeleted={refreshUserOnly}
+                />
                 <ExperienceList
                   userId={localUser.id}
                   experiences={localUser.experiences || []}
@@ -164,15 +170,6 @@ function Dashboard() {
                   onProjectDeleted={refreshUserOnly}
                 />
               </div>
-            </div>
-
-            <div className="mt-8">
-              <EducationList
-                userId={localUser.id}
-                educations={localUser.educations || []}
-                onEducationAdded={refreshUserOnly}
-                onEducationDeleted={refreshUserOnly}
-              />
             </div>
           </div>
         ) : (
@@ -194,7 +191,7 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+      <div className="flex flex-col flex-1 w-full min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
         <div className="text-xl font-semibold text-gray-600 dark:text-gray-300">Loading Application...</div>
       </div>
     );
