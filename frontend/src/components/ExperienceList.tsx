@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import type { Experience, ExperienceCreate, Skill } from '../types';
+import type { Experience, ExperienceCreate, ExperienceUpdate, Skill } from '../types';
 import { apiService } from '../services/api';
-import { Briefcase, Plus, X, Calendar } from 'lucide-react';
+import { Briefcase, Plus, X, Calendar, Edit2 } from 'lucide-react';
 
 interface ExperienceListProps {
   userId: number;
@@ -13,6 +13,7 @@ interface ExperienceListProps {
 
 export const ExperienceList: React.FC<ExperienceListProps> = ({ userId, experiences, allSkills, onExperienceAdded, onExperienceDeleted }) => {
   const [isAdding, setIsAdding] = useState(false);
+  const [editingExp, setEditingExp] = useState<Experience | null>(null);
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Delete this experience?')) return;
@@ -34,21 +35,30 @@ export const ExperienceList: React.FC<ExperienceListProps> = ({ userId, experien
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Experience</h2>
         </div>
         <button
-          onClick={() => setIsAdding(!isAdding)}
+          onClick={() => {
+            if (isAdding || editingExp) {
+              setIsAdding(false);
+              setEditingExp(null);
+            } else {
+              setIsAdding(true);
+            }
+          }}
           className="flex items-center gap-1 text-sm bg-green-50 text-green-600 dark:bg-green-900 dark:text-green-300 px-3 py-1.5 rounded-md hover:bg-green-100 dark:hover:bg-green-800 transition-colors"
         >
-          {isAdding ? <X size={16} /> : <Plus size={16} />}
-          {isAdding ? 'Cancel' : 'Add Experience'}
+          {(isAdding || editingExp) ? <X size={16} /> : <Plus size={16} />}
+          {(isAdding || editingExp) ? 'Cancel' : 'Add Experience'}
         </button>
       </div>
 
-      {isAdding && (
+      {(isAdding || editingExp) && (
         <div className="mb-8 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border dark:border-gray-600">
           <ExperienceForm
             userId={userId}
             allSkills={allSkills}
+            existingExperience={editingExp}
             onSuccess={() => {
               setIsAdding(false);
+              setEditingExp(null);
               onExperienceAdded();
             }}
           />
@@ -72,12 +82,24 @@ export const ExperienceList: React.FC<ExperienceListProps> = ({ userId, experien
                     {new Date(exp.start_date).toLocaleDateString()} - {exp.end_date ? new Date(exp.end_date).toLocaleDateString() : 'Present'}
                   </div>
                 </div>
-                <button
-                  onClick={() => handleDelete(exp.id)}
-                  className="text-gray-400 hover:text-red-500"
-                >
-                  <X size={18} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setEditingExp(exp);
+                      setIsAdding(false);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="text-gray-400 hover:text-blue-500"
+                  >
+                    <Edit2 size={18} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(exp.id)}
+                    className="text-gray-400 hover:text-red-500"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
               </div>
 
               {exp.description && (
@@ -106,18 +128,21 @@ export const ExperienceList: React.FC<ExperienceListProps> = ({ userId, experien
 interface ExperienceFormProps {
   userId: number;
   allSkills: Skill[];
+  existingExperience?: Experience | null;
   onSuccess: () => void;
 }
 
-const ExperienceForm: React.FC<ExperienceFormProps> = ({ userId, allSkills, onSuccess }) => {
+const ExperienceForm: React.FC<ExperienceFormProps> = ({ userId, allSkills, existingExperience, onSuccess }) => {
   const [formData, setFormData] = useState({
-    title: '',
-    company: '',
-    start_date: '',
-    end_date: '',
-    description: '',
+    title: existingExperience?.title || '',
+    company: existingExperience?.company || '',
+    start_date: existingExperience?.start_date || '',
+    end_date: existingExperience?.end_date || '',
+    description: existingExperience?.description || '',
   });
-  const [selectedSkillIds, setSelectedSkillIds] = useState<number[]>([]);
+  const [selectedSkillIds, setSelectedSkillIds] = useState<number[]>(
+    existingExperience?.skills.map(s => s.id) || []
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -136,19 +161,31 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({ userId, allSkills, onSu
     setIsLoading(true);
     setError(null);
     try {
-      const payload: ExperienceCreate = {
-        user_id: userId,
-        title: formData.title,
-        company: formData.company,
-        start_date: formData.start_date,
-        end_date: formData.end_date || undefined,
-        description: formData.description || undefined,
-        skill_ids: selectedSkillIds,
-      };
-      await apiService.createExperience(payload);
+      if (existingExperience) {
+        const payload: ExperienceUpdate = {
+          title: formData.title,
+          company: formData.company,
+          start_date: formData.start_date,
+          end_date: formData.end_date || undefined,
+          description: formData.description || undefined,
+          skill_ids: selectedSkillIds,
+        };
+        await apiService.updateExperience(existingExperience.id, payload);
+      } else {
+        const payload: ExperienceCreate = {
+          user_id: userId,
+          title: formData.title,
+          company: formData.company,
+          start_date: formData.start_date,
+          end_date: formData.end_date || undefined,
+          description: formData.description || undefined,
+          skill_ids: selectedSkillIds,
+        };
+        await apiService.createExperience(payload);
+      }
       onSuccess();
     } catch (err: any) {
-      setError(err.message || 'Failed to add experience');
+      setError(err.message || `Failed to ${existingExperience ? 'update' : 'add'} experience`);
     } finally {
       setIsLoading(false);
     }
@@ -205,7 +242,7 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({ userId, allSkills, onSu
 
       <div className="flex justify-end">
         <button type="submit" disabled={isLoading} className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50">
-          {isLoading ? 'Saving...' : 'Save Experience'}
+          {isLoading ? 'Saving...' : (existingExperience ? 'Update Experience' : 'Save Experience')}
         </button>
       </div>
     </form>

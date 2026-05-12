@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import type { Education, EducationCreate } from '../types';
+import type { Education, EducationCreate, EducationUpdate } from '../types';
 import { apiService } from '../services/api';
-import { GraduationCap, Plus, X, Calendar } from 'lucide-react';
+import { GraduationCap, Plus, X, Calendar, Edit2 } from 'lucide-react';
 
 interface EducationListProps {
   userId: number;
@@ -12,6 +12,7 @@ interface EducationListProps {
 
 export const EducationList: React.FC<EducationListProps> = ({ userId, educations, onEducationAdded, onEducationDeleted }) => {
   const [isAdding, setIsAdding] = useState(false);
+  const [editingEdu, setEditingEdu] = useState<Education | null>(null);
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Delete this education?')) return;
@@ -33,20 +34,29 @@ export const EducationList: React.FC<EducationListProps> = ({ userId, educations
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Education</h2>
         </div>
         <button
-          onClick={() => setIsAdding(!isAdding)}
+          onClick={() => {
+            if (isAdding || editingEdu) {
+              setIsAdding(false);
+              setEditingEdu(null);
+            } else {
+              setIsAdding(true);
+            }
+          }}
           className="flex items-center gap-1 text-sm bg-indigo-50 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300 px-3 py-1.5 rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-800 transition-colors"
         >
-          {isAdding ? <X size={16} /> : <Plus size={16} />}
-          {isAdding ? 'Cancel' : 'Add Education'}
+          {(isAdding || editingEdu) ? <X size={16} /> : <Plus size={16} />}
+          {(isAdding || editingEdu) ? 'Cancel' : 'Add Education'}
         </button>
       </div>
 
-      {isAdding && (
+      {(isAdding || editingEdu) && (
         <div className="mb-8 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border dark:border-gray-600">
           <EducationForm
             userId={userId}
+            existingEducation={editingEdu}
             onSuccess={() => {
               setIsAdding(false);
+              setEditingEdu(null);
               onEducationAdded();
             }}
           />
@@ -70,12 +80,24 @@ export const EducationList: React.FC<EducationListProps> = ({ userId, educations
                     {edu.start_date} - {edu.end_date ? edu.end_date : 'Present'}
                   </div>
                 </div>
-                <button
-                  onClick={() => handleDelete(edu.id)}
-                  className="text-gray-400 hover:text-red-500"
-                >
-                  <X size={18} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setEditingEdu(edu);
+                      setIsAdding(false);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="text-gray-400 hover:text-blue-500"
+                  >
+                    <Edit2 size={18} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(edu.id)}
+                    className="text-gray-400 hover:text-red-500"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
               </div>
 
               {edu.description && (
@@ -93,16 +115,17 @@ export const EducationList: React.FC<EducationListProps> = ({ userId, educations
 
 interface EducationFormProps {
   userId: number;
+  existingEducation?: Education | null;
   onSuccess: () => void;
 }
 
-const EducationForm: React.FC<EducationFormProps> = ({ userId, onSuccess }) => {
+const EducationForm: React.FC<EducationFormProps> = ({ userId, existingEducation, onSuccess }) => {
   const [formData, setFormData] = useState({
-    degree: '',
-    institution: '',
-    start_date: '',
-    end_date: '',
-    description: '',
+    degree: existingEducation?.degree || '',
+    institution: existingEducation?.institution || '',
+    start_date: existingEducation?.start_date || '',
+    end_date: existingEducation?.end_date || '',
+    description: existingEducation?.description || '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,18 +139,29 @@ const EducationForm: React.FC<EducationFormProps> = ({ userId, onSuccess }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const payload: EducationCreate = {
-        user_id: userId,
-        degree: formData.degree,
-        institution: formData.institution,
-        start_date: formData.start_date,
-        end_date: formData.end_date || undefined,
-        description: formData.description || undefined,
-      };
-      await apiService.createEducation(payload);
+      if (existingEducation) {
+        const payload: EducationUpdate = {
+          degree: formData.degree,
+          institution: formData.institution,
+          start_date: formData.start_date,
+          end_date: formData.end_date || undefined,
+          description: formData.description || undefined,
+        };
+        await apiService.updateEducation(existingEducation.id, payload);
+      } else {
+        const payload: EducationCreate = {
+          user_id: userId,
+          degree: formData.degree,
+          institution: formData.institution,
+          start_date: formData.start_date,
+          end_date: formData.end_date || undefined,
+          description: formData.description || undefined,
+        };
+        await apiService.createEducation(payload);
+      }
       onSuccess();
     } catch (err: any) {
-      setError(err.message || 'Failed to add education');
+      setError(err.message || `Failed to ${existingEducation ? 'update' : 'add'} education`);
     } finally {
       setIsLoading(false);
     }
@@ -163,7 +197,7 @@ const EducationForm: React.FC<EducationFormProps> = ({ userId, onSuccess }) => {
 
       <div className="flex justify-end">
         <button type="submit" disabled={isLoading} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50">
-          {isLoading ? 'Saving...' : 'Save Education'}
+          {isLoading ? 'Saving...' : (existingEducation ? 'Update Education' : 'Save Education')}
         </button>
       </div>
     </form>

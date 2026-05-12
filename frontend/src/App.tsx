@@ -10,6 +10,7 @@ import { ProjectList } from './components/ProjectList';
 import { EducationList } from './components/EducationList';
 import { CVImporter } from './components/CVImporter';
 import { CVBuilder } from './components/CVBuilder';
+import type { MatchResponse } from './types';
 
 function Dashboard() {
   const [activeTab, setActiveTab] = useState<'profile' | 'matcher'>('profile');
@@ -20,6 +21,15 @@ function Dashboard() {
 
   // Local state to handle user updates from components
   const [localUser, setLocalUser] = useState(user);
+
+  // Lifted CV Builder states
+  const [matchResult, setMatchResult] = useState<MatchResponse | null>(null);
+  const [lastJobDescription, setLastJobDescription] = useState<string>('');
+  const [selectedExperiences, setSelectedExperiences] = useState<Set<number>>(new Set());
+  const [selectedProjects, setSelectedProjects] = useState<Set<number>>(new Set());
+  const [selectedEducations, setSelectedEducations] = useState<Set<number>>(new Set());
+  const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
+  const [hiddenBullets, setHiddenBullets] = useState<Record<string, Set<number>>>({});
 
   useEffect(() => {
     if (user) {
@@ -46,6 +56,18 @@ function Dashboard() {
     try {
       const response = await apiService.getSkills();
       setSkills(response.data);
+
+      // Remove deleted skills from selected skills
+      const skillNames = new Set(response.data.map(s => s.name));
+      setSelectedSkills(prev => {
+        const next = new Set<string>();
+        prev.forEach(skillName => {
+          if (skillNames.has(skillName)) {
+            next.add(skillName);
+          }
+        });
+        return next;
+      });
     } catch (err) {
       console.error("Failed to refresh skills", err);
     }
@@ -178,6 +200,20 @@ function Dashboard() {
               user={localUser}
               skills={skills}
               onSkillsChanged={fetchSkillsOnly}
+              matchResult={matchResult}
+              setMatchResult={setMatchResult}
+              lastJobDescription={lastJobDescription}
+              setLastJobDescription={setLastJobDescription}
+              selectedExperiences={selectedExperiences}
+              setSelectedExperiences={setSelectedExperiences}
+              selectedProjects={selectedProjects}
+              setSelectedProjects={setSelectedProjects}
+              selectedEducations={selectedEducations}
+              setSelectedEducations={setSelectedEducations}
+              selectedSkills={selectedSkills}
+              setSelectedSkills={setSelectedSkills}
+              hiddenBullets={hiddenBullets}
+              setHiddenBullets={setHiddenBullets}
             />
           </div>
         )}
