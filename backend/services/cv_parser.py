@@ -3,13 +3,11 @@ import io
 import logging
 from datetime import datetime
 from pypdf import PdfReader
-from sqlalchemy.orm import Session
-import models
 from utils.cv_heuristics import SECTION_REGEX, DATE_REGEX, TECH_SKILLS_SEED
 
 logger = logging.getLogger(__name__)
 
-def parse_cv_pdf(file_bytes: bytes, db_session: Session = None):
+def parse_cv_pdf(file_bytes: bytes):
     reader = PdfReader(io.BytesIO(file_bytes))
     text = ""
     for page in reader.pages:
@@ -197,13 +195,6 @@ def parse_cv_pdf(file_bytes: bytes, db_session: Session = None):
         pattern = r'\b' + escaped_skill + r'\b'
         if re.search(pattern, text_lower):
             matched_skills_names.add(skill)
-
-    # For matching to DB objects if a DB session is provided (for backwards compatibility/ease)
-    matched_skills = []
-    if db_session:
-        # Actually this will be handled in the router according to instructions,
-        # but we return the raw strings as well or mock models if needed.
-        logger.debug("DB session provided to parse_cv_pdf, but skill mapping is handled by the router")
 
     return {
         "skills": list(matched_skills_names),
