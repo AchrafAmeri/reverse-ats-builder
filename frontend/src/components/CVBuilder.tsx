@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import type { User, MatchResponse, Skill } from '../types';
 import { JobMatcher } from './JobMatcher';
 import { SkillSuggestions } from './SkillSuggestions';
@@ -10,24 +11,44 @@ interface CVBuilderProps {
   user: User;
   skills: Skill[];
   onSkillsChanged: () => void;
+  matchResult: MatchResponse | null;
+  setMatchResult: Dispatch<SetStateAction<MatchResponse | null>>;
+  lastJobDescription: string;
+  setLastJobDescription: Dispatch<SetStateAction<string>>;
+  selectedExperiences: Set<number>;
+  setSelectedExperiences: Dispatch<SetStateAction<Set<number>>>;
+  selectedProjects: Set<number>;
+  setSelectedProjects: Dispatch<SetStateAction<Set<number>>>;
+  selectedEducations: Set<number>;
+  setSelectedEducations: Dispatch<SetStateAction<Set<number>>>;
+  selectedSkills: Set<string>;
+  setSelectedSkills: Dispatch<SetStateAction<Set<string>>>;
+  hiddenBullets: Record<string, Set<number>>;
+  setHiddenBullets: Dispatch<SetStateAction<Record<string, Set<number>>>>;
 }
 
 export type ActiveCategory = 'experiences' | 'projects' | 'educations' | 'skills' | null;
 
-export function CVBuilder({ user, skills, onSkillsChanged }: CVBuilderProps) {
-  const [matchResult, setMatchResult] = useState<MatchResponse | null>(null);
-  const [lastJobDescription, setLastJobDescription] = useState<string>('');
+export function CVBuilder({
+  user,
+  skills,
+  onSkillsChanged,
+  matchResult,
+  setMatchResult,
+  lastJobDescription,
+  setLastJobDescription,
+  selectedExperiences,
+  setSelectedExperiences,
+  selectedProjects,
+  setSelectedProjects,
+  selectedEducations,
+  setSelectedEducations,
+  selectedSkills,
+  setSelectedSkills,
+  hiddenBullets,
+  setHiddenBullets
+}: CVBuilderProps) {
   const [activeCategory, setActiveCategory] = useState<ActiveCategory>(null);
-
-  // Selections state
-  const [selectedExperiences, setSelectedExperiences] = useState<Set<number>>(new Set());
-  const [selectedProjects, setSelectedProjects] = useState<Set<number>>(new Set());
-  const [selectedEducations, setSelectedEducations] = useState<Set<number>>(new Set());
-  const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set());
-
-  // Hidden bullets state: Map of itemId to set of hidden bullet indices
-  // We prefix keys like 'exp_1' or 'proj_2' to differentiate
-  const [hiddenBullets, setHiddenBullets] = useState<Record<string, Set<number>>>({});
 
   // Initialize selections when match result changes
   useEffect(() => {

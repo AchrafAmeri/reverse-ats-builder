@@ -1,14 +1,11 @@
 from datetime import datetime, timedelta
 from typing import Optional
 from passlib.context import CryptContext
-import os
-import secrets
 import jwt
 
-# Load SECRET_KEY from environment, or generate a random one for local development
-SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_hex(32))
+SECRET_KEY = "super_secret_jwt_key_for_development_purposes" # In a real app this should be in .env
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60 * 24 * 7)) # 1 week default
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # 1 week
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

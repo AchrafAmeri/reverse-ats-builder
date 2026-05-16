@@ -23,7 +23,7 @@ export function JobMatcher({ userId, onMatchComplete }: JobMatcherProps) {
       setError(null);
       const response = await apiService.generateMatch(userId, jobDescription);
       onMatchComplete(response.data, jobDescription);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to generate match:', err);
       setError('Failed to generate tailored CV. Please try again.');
       onMatchComplete(null, jobDescription);
