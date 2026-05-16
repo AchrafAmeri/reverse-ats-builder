@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiService } from '../services/api';
+import axios from 'axios';
 
 export const Login = ({ onSwitchToRegister }: { onSwitchToRegister: () => void }) => {
   const [email, setEmail] = useState('');
@@ -28,8 +29,12 @@ export const Login = ({ onSwitchToRegister }: { onSwitchToRegister: () => void }
       const userId = parseInt(payload.sub);
 
       login(token, userId);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else {
+        setError('Login failed. Please check your credentials.');
+      }
     } finally {
       setIsLoading(false);
     }
