@@ -7,6 +7,11 @@ from rapidfuzz import fuzz
 from models import User
 from utils.synonyms import SYNONYMS
 
+COMPILED_SYNONYMS = [
+    (re.compile(r'\b' + re.escape(syn_key) + r'\b'), syn_val)
+    for syn_key, syn_val in SYNONYMS.items()
+]
+
 STOP_WORDS = {
     "the", "and", "we", "looking", "for", "a", "with", "also", "not", "average", "developer",
     "to", "in", "of", "on", "is", "are", "as", "it", "at", "an", "be", "this", "or", "by",
@@ -15,9 +20,8 @@ STOP_WORDS = {
 
 def calculate_match(user: User, job_description: str) -> Dict[str, Any]:
     jd_lower = job_description.lower()
-    for syn_key, syn_val in SYNONYMS.items():
-        pattern = r'\b' + re.escape(syn_key) + r'\b'
-        jd_lower = re.sub(pattern, syn_val, jd_lower)
+    for pattern, syn_val in COMPILED_SYNONYMS:
+        jd_lower = pattern.sub(syn_val, jd_lower)
 
     unique_skills = set()
     for exp in user.experiences:
