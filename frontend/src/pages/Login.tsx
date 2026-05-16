@@ -21,14 +21,9 @@ export const Login = ({ onSwitchToRegister }: { onSwitchToRegister: () => void }
       formData.append('password', password);
 
       const response = await apiService.login(formData);
-
-      // Parse userId from JWT manually for now (usually handled by a backend /me endpoint)
       const token = response.data.access_token;
-      const payloadBase64 = token.split('.')[1];
-      const payload = JSON.parse(atob(payloadBase64));
-      const userId = parseInt(payload.sub);
 
-      login(token, userId);
+      login(token);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data?.detail) {
         setError(err.response.data.detail);
