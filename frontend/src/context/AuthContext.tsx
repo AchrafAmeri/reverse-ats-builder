@@ -6,7 +6,7 @@ import type { User } from '../types';
 interface AuthContextType {
   token: string | null;
   user: User | null;
-  login: (token: string, userId: number) => void;
+  login: (token: string) => void;
   logout: () => void;
   isLoading: boolean;
 }
@@ -22,20 +22,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const fetchUser = async () => {
       if (token) {
         apiService.setToken(token);
-        // We'll extract userId from JWT in a real app, but for now we'll decode it manually
-        // or let the backend /users/me endpoint handle it.
-        // For simplicity, we just use the ID we get when logging in.
-        const userId = localStorage.getItem('userId');
-        if (userId) {
-          try {
-            const response = await apiService.getUser(parseInt(userId));
-            setUser(response.data);
-          } catch (error) {
-            console.error('Failed to fetch user:', error);
-            logout();
-          }
-        } else {
-            logout();
+        try {
+          const response = await apiService.getMe();
+          setUser(response.data);
+        } catch (error) {
+          console.error('Failed to fetch user:', error);
+          logout();
         }
       } else {
         apiService.setToken(null);
@@ -46,15 +38,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     fetchUser();
   }, [token]);
 
-  const login = (newToken: string, userId: number) => {
+  const login = (newToken: string) => {
     localStorage.setItem('token', newToken);
-    localStorage.setItem('userId', userId.toString());
     setToken(newToken);
   };
 
   const logout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('userId');
     setToken(null);
     setUser(null);
     apiService.setToken(null);

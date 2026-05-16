@@ -25,7 +25,7 @@ async def import_cv(
         raise HTTPException(status_code=400, detail="Error reading file")
 
     try:
-        parsed_data = parse_cv_pdf(content, db)
+        parsed_data = parse_cv_pdf(content)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error parsing PDF: {str(e)}")
 

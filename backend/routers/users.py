@@ -33,6 +33,10 @@ def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), c
     users = db.query(models.User).offset(skip).limit(limit).all()
     return users
 
+@router.get("/me", response_model=schemas.UserResponse)
+def read_user_me(current_user: models.User = Depends(get_current_user)):
+    return current_user
+
 @router.get("/{user_id}", response_model=schemas.UserResponse)
 def read_user(user_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     user = db.query(models.User).filter(models.User.id == user_id).first()

@@ -27,6 +27,7 @@ export const apiService = {
 
   // Users
   getUsers: () => api.get<User[]>('/users'),
+  getMe: () => api.get<User>('/users/me'),
   getUser: (id: number) => api.get<User>(`/users/${id}`),
   createUser: (data: UserCreate) => api.post<User>('/users', data),
   updateUser: (id: number, data: UserUpdate) => api.put<User>(`/users/${id}`, data),

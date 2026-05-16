@@ -2,8 +2,6 @@ import regex as re
 import io
 from datetime import datetime
 from pypdf import PdfReader
-from sqlalchemy.orm import Session
-import models
 from utils.cv_heuristics import SECTION_REGEX, DATE_REGEX, TECH_SKILLS_SEED
 
 def parse_cv_pdf(file_bytes: bytes, db_session: Session = None):
