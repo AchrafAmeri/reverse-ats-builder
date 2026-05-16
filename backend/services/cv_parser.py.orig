@@ -1,13 +1,10 @@
 import regex as re
 import io
-import logging
 from datetime import datetime
 from pypdf import PdfReader
 from sqlalchemy.orm import Session
 import models
 from utils.cv_heuristics import SECTION_REGEX, DATE_REGEX, TECH_SKILLS_SEED
-
-logger = logging.getLogger(__name__)
 
 def parse_cv_pdf(file_bytes: bytes, db_session: Session = None):
     reader = PdfReader(io.BytesIO(file_bytes))
@@ -95,14 +92,14 @@ def parse_cv_pdf(file_bytes: bytes, db_session: Session = None):
         if years:
             try:
                 start_date = datetime.strptime(years[0], "%Y").date()
-            except ValueError as e:
-                logger.warning("Failed to parse start_date from year '%s': %s", years[0], e)
+            except ValueError:
+                pass
 
             if len(years) > 1:
                 try:
                     end_date = datetime.strptime(years[1], "%Y").date()
-                except ValueError as e:
-                    logger.warning("Failed to parse end_date from year '%s': %s", years[1], e)
+                except ValueError:
+                    pass
 
         # The first line before or after the date might be the title/company
         chunk_lines = chunk_text.split('\n')
@@ -203,7 +200,7 @@ def parse_cv_pdf(file_bytes: bytes, db_session: Session = None):
     if db_session:
         # Actually this will be handled in the router according to instructions,
         # but we return the raw strings as well or mock models if needed.
-        logger.debug("DB session provided to parse_cv_pdf, but skill mapping is handled by the router")
+        pass
 
     return {
         "skills": list(matched_skills_names),
