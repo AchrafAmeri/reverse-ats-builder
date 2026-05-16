@@ -1,0 +1,17 @@
+--- backend/services/cv_parser.py
++++ backend/services/cv_parser.py
+@@ -1,5 +1,6 @@
+ import regex as re
+ import io
++import logging
+ from datetime import datetime
+ from pypdf import PdfReader
+ from sqlalchemy.orm import Session
+@@ -7,6 +8,8 @@
+ from utils.cv_heuristics import SECTION_REGEX, DATE_REGEX, TECH_SKILLS_SEED
+
++logger = logging.getLogger(__name__)
++
+ def parse_cv_pdf(file_bytes: bytes, db_session: Session = None):
+     reader = PdfReader(io.BytesIO(file_bytes))
+     text = ""
