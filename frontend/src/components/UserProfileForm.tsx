@@ -40,8 +40,8 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({ user, onUpdate
     try {
       const response = await apiService.updateUser(user.id, formData);
       onUpdate(response.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update user profile');
+    } catch (err: any) {
+      setError(err.message || 'Failed to update user profile');
     } finally {
       setIsLoading(false);
     }

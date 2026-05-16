@@ -184,8 +184,8 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({ userId, allSkills, exis
         await apiService.createExperience(payload);
       }
       onSuccess();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : `Failed to ${existingExperience ? 'update' : 'add'} experience`);
+    } catch (err: any) {
+      setError(err.message || `Failed to ${existingExperience ? 'update' : 'add'} experience`);
     } finally {
       setIsLoading(false);
     }
