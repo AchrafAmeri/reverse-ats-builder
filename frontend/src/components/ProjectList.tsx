@@ -175,8 +175,8 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ userId, allSkills, existingPr
         await apiService.createProject(payload);
       }
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || `Failed to ${existingProject ? 'update' : 'add'} project`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : `Failed to ${existingProject ? 'update' : 'add'} project`);
     } finally {
       setIsLoading(false);
     }
