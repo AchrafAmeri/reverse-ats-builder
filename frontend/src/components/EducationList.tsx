@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import axios from 'axios';
 import type { Education, EducationCreate, EducationUpdate } from '../types';
 import { apiService } from '../services/api';
 import { GraduationCap, Plus, X, Calendar, Edit2 } from 'lucide-react';
@@ -160,8 +161,14 @@ const EducationForm: React.FC<EducationFormProps> = ({ userId, existingEducation
         await apiService.createEducation(payload);
       }
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || `Failed to ${existingEducation ? 'update' : 'add'} education`);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.detail || err.message || `Failed to ${existingEducation ? 'update' : 'add'} education`);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(`Failed to ${existingEducation ? 'update' : 'add'} education`);
+      }
     } finally {
       setIsLoading(false);
     }

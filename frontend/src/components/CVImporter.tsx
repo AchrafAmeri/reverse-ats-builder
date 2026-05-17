@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import axios from 'axios';
 import { UploadCloud, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { apiService } from '../services/api';
 
@@ -54,9 +55,15 @@ export function CVImporter({ onImportSuccess }: CVImporterProps) {
       setUploadStatus('success');
       setMessage(response.data.message);
       onImportSuccess();
-    } catch (error: any) {
+    } catch (error) {
       setUploadStatus('error');
-      setMessage(error.response?.data?.detail || 'An error occurred during import.');
+      if (axios.isAxiosError(error)) {
+        setMessage(error.response?.data?.detail || error.message || 'An error occurred during import.');
+      } else if (error instanceof Error) {
+        setMessage(error.message || 'An error occurred during import.');
+      } else {
+        setMessage('An error occurred during import.');
+      }
     } finally {
       setIsUploading(false);
       // Reset input so the same file can be uploaded again if needed

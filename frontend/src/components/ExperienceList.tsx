@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import axios from 'axios';
 import type { Experience, ExperienceCreate, ExperienceUpdate, Skill } from '../types';
 import { apiService } from '../services/api';
 import { Briefcase, Plus, X, Calendar, Edit2 } from 'lucide-react';
@@ -184,8 +185,14 @@ const ExperienceForm: React.FC<ExperienceFormProps> = ({ userId, allSkills, exis
         await apiService.createExperience(payload);
       }
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || `Failed to ${existingExperience ? 'update' : 'add'} experience`);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.detail || err.message || `Failed to ${existingExperience ? 'update' : 'add'} experience`);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(`Failed to ${existingExperience ? 'update' : 'add'} experience`);
+      }
     } finally {
       setIsLoading(false);
     }

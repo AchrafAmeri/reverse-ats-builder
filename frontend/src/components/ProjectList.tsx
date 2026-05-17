@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import axios from 'axios';
 import type { Project, ProjectCreate, ProjectUpdate, Skill } from '../types';
 import { apiService } from '../services/api';
 import { Code, Plus, X, ExternalLink, Edit2 } from 'lucide-react';
@@ -175,8 +176,14 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ userId, allSkills, existingPr
         await apiService.createProject(payload);
       }
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || `Failed to ${existingProject ? 'update' : 'add'} project`);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.detail || err.message || `Failed to ${existingProject ? 'update' : 'add'} project`);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(`Failed to ${existingProject ? 'update' : 'add'} project`);
+      }
     } finally {
       setIsLoading(false);
     }

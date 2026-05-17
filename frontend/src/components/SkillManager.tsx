@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import axios from 'axios';
 import type { Skill, SkillCreate } from '../types';
 import { apiService } from '../services/api';
 import { Tags, Plus, X } from 'lucide-react';
@@ -29,8 +30,14 @@ export const SkillManager: React.FC<SkillManagerProps> = ({ skills, onSkillsChan
       onSkillsChanged();
       setNewSkillName('');
       setNewSkillCategory('');
-    } catch (err: any) {
-      setError(err.message || 'Failed to add skill');
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.detail || err.message || 'Failed to add skill');
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to add skill');
+      }
     } finally {
       setIsLoading(false);
     }

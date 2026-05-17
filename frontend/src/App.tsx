@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import type { Skill } from './types';
 import { apiService } from './services/api';
 import { useAuth } from './context/AuthContext';
@@ -45,8 +46,14 @@ function Dashboard() {
       const skillsResponse = await apiService.getSkills();
       setSkills(skillsResponse.data);
 
-    } catch (err: any) {
-      setError('Failed to load initial data. Make sure the backend is running.');
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.detail || err.message || 'Failed to load initial data. Make sure the backend is running.');
+      } else if (err instanceof Error) {
+        setError(err.message || 'Failed to load initial data. Make sure the backend is running.');
+      } else {
+        setError('Failed to load initial data. Make sure the backend is running.');
+      }
     } finally {
       setLoading(false);
     }

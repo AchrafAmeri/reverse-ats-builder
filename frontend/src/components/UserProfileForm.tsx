@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import type { User, UserUpdate } from '../types';
 import { apiService } from '../services/api';
 import { Save, User as UserIcon } from 'lucide-react';
@@ -40,8 +41,14 @@ export const UserProfileForm: React.FC<UserProfileFormProps> = ({ user, onUpdate
     try {
       const response = await apiService.updateUser(user.id, formData);
       onUpdate(response.data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to update user profile');
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.detail || err.message || 'Failed to update user profile');
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to update user profile');
+      }
     } finally {
       setIsLoading(false);
     }

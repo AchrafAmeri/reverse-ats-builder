@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import axios from 'axios';
 import { apiService } from '../services/api';
 import type { MatchResponse } from '../types';
 
@@ -23,9 +24,15 @@ export function JobMatcher({ userId, onMatchComplete }: JobMatcherProps) {
       setError(null);
       const response = await apiService.generateMatch(userId, jobDescription);
       onMatchComplete(response.data, jobDescription);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to generate match:', err);
-      setError('Failed to generate tailored CV. Please try again.');
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.detail || err.message || 'Failed to generate tailored CV. Please try again.');
+      } else if (err instanceof Error) {
+        setError(err.message || 'Failed to generate tailored CV. Please try again.');
+      } else {
+        setError('Failed to generate tailored CV. Please try again.');
+      }
       onMatchComplete(null, jobDescription);
     } finally {
       setIsGenerating(false);
