@@ -29,8 +29,8 @@ export const SkillManager: React.FC<SkillManagerProps> = ({ skills, onSkillsChan
       onSkillsChanged();
       setNewSkillName('');
       setNewSkillCategory('');
-    } catch (err: any) {
-      setError(err.message || 'Failed to add skill');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add skill');
     } finally {
       setIsLoading(false);
     }
