@@ -160,8 +160,8 @@ const EducationForm: React.FC<EducationFormProps> = ({ userId, existingEducation
         await apiService.createEducation(payload);
       }
       onSuccess();
-    } catch (err: any) {
-      setError(err.message || `Failed to ${existingEducation ? 'update' : 'add'} education`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : `Failed to ${existingEducation ? 'update' : 'add'} education`);
     } finally {
       setIsLoading(false);
     }

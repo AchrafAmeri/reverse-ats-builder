@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { apiService } from '../services/api';
+import axios from 'axios';
 
 export const Register = ({ onSwitchToLogin }: { onSwitchToLogin: () => void }) => {
   const [name, setName] = useState('');
@@ -22,8 +23,8 @@ export const Register = ({ onSwitchToLogin }: { onSwitchToLogin: () => void }) =
 
       // Auto switch to login after successful registration
       onSwitchToLogin();
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+    } catch (err) {
+      setError(axios.isAxiosError(err) && err.response?.data?.detail ? err.response.data.detail : 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

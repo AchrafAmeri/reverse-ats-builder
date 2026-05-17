@@ -45,7 +45,7 @@ function Dashboard() {
       const skillsResponse = await apiService.getSkills();
       setSkills(skillsResponse.data);
 
-    } catch (err: any) {
+    } catch (err) {
       setError('Failed to load initial data. Make sure the backend is running.');
     } finally {
       setLoading(false);
